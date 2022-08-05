@@ -11,13 +11,14 @@ type (
 	// by an HTTP handler to construct an HTTP response.
 	// See: https://golang.org/pkg/net/http/#ResponseWriter
 	Response struct {
-		echo        *Echo
-		beforeFuncs []func()
-		afterFuncs  []func()
-		Writer      http.ResponseWriter
-		Status      int
-		Size        int64
-		Committed   bool
+		echo             *Echo
+		beforeFuncs      []func()
+		afterFuncs       []func()
+		afterFuncsCalled bool
+		Writer           http.ResponseWriter
+		Status           int
+		Size             int64
+		Committed        bool
 	}
 )
 
@@ -74,9 +75,13 @@ func (r *Response) Write(b []byte) (n int, err error) {
 	}
 	n, err = r.Writer.Write(b)
 	r.Size += int64(n)
+	if r.afterFuncsCalled {
+		return
+	}
 	for _, fn := range r.afterFuncs {
 		fn()
 	}
+	r.afterFuncsCalled = true
 	return
 }
 

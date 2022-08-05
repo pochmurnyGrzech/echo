@@ -343,11 +343,16 @@ func TestContext(t *testing.T) {
 	// Attachment
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec).(*context)
+	afterCallsCount := 0
+	c.Response().After(func() {
+		afterCallsCount++
+	})
 	err = c.Attachment("_fixture/images/walle.png", "walle.png")
 	if assert.NoError(err) {
 		assert.Equal(http.StatusOK, rec.Code)
 		assert.Equal("attachment; filename=\"walle.png\"", rec.Header().Get(HeaderContentDisposition))
 		assert.Equal(219885, rec.Body.Len())
+		assert.Equal(1, afterCallsCount)
 	}
 
 	// Inline
